@@ -526,9 +526,15 @@ function setActiveLangButton(L){
     b.classList.toggle('active', b.dataset.lang === L);
   });
 }
-
-// ========== Initialize on Page Load ==========
+// ========== Initialize on Page Load (UPDATED with URL params support) ==========
 window.addEventListener('DOMContentLoaded', () => {
+  // 1. Вспомогательная функция для чтения ?lang=en из адреса
+  function getUrlParam(name) {
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  }
+
   // Подготовим confetti canvas и уберём возможные хвосты
   ensureConfettiCanvas();
   hardCleanupOverlays();
@@ -540,18 +546,26 @@ window.addEventListener('DOMContentLoaded', () => {
     bs.removeAttribute('disabled');
   }
   
-  // Загрузка настроек
+  // 2. Логика выбора языка (URL > Saved > Default)
   const saved = Storage.loadSettings();
-  if (saved?.lang) {
+  const urlLang = getUrlParam('lang'); // Читаем из ссылки
+  
+  if (urlLang && ['en', 'uk', 'ru', 'es'].includes(urlLang)) {
+    // Если в ссылке есть язык - используем его ПРИНУДИТЕЛЬНО
+    state.lang = urlLang;
+  } else if (saved?.lang) {
+    // Иначе берем сохраненный
     state.lang = saved.lang;
   }
+  // Иначе останется 'uk' по умолчанию (из const state)
+
   applyI18n(state.lang);
   setActiveLangButton(state.lang);
   
   // Сохранённый звук
   loadSoundPreference();
   
-  // Переключатель языка
+  // Переключатель языка (кнопки в шапке)
   document.querySelectorAll('.lang-btn').forEach(b => {
     b.addEventListener('click', () => {
       state.lang = b.dataset.lang;
@@ -597,7 +611,6 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   
   document.getElementById("btn-next").addEventListener('click', () => {
-    // Всегда разрешаем next (не блокируем из-за state.answered)
     playSound(sfx.click);
     nextTask();
   });
@@ -647,3 +660,4 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
