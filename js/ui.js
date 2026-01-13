@@ -26,7 +26,14 @@ window.I18N = {
     wrong: "Помилки",
     streak: "Серія",
     right_toast: "Правильно! 🎉",
-    wrong_toast: "Спробуй ще раз! 💪"
+    wrong_toast: "Спробуй ще раз! 💪",
+    results_title: "Ти на правильному шляху!",
+    total_label: "Всього",
+    correct_label: "Вірно",
+    wrong_label: "Помилки",
+    accuracy_label: "Точність",
+    time_label: "Час",
+    try_again: "Спробувати ще"
   },
   en: {
     title: "Addition & Subtraction",
@@ -51,7 +58,14 @@ window.I18N = {
     wrong: "Wrong",
     streak: "Streak",
     right_toast: "Correct! 🎉",
-    wrong_toast: "Try again! 💪"
+    wrong_toast: "Try again! 💪",
+    results_title: "You're on the right track!",
+    total_label: "Total",
+    correct_label: "Correct",
+    wrong_label: "Wrong",
+    accuracy_label: "Accuracy",
+    time_label: "Time",
+    try_again: "Try Again"
   },
   ru: {
     title: "Сложение и вычитание",
@@ -76,7 +90,14 @@ window.I18N = {
     wrong: "Ошибки",
     streak: "Серия",
     right_toast: "Правильно! 🎉",
-    wrong_toast: "Попробуй ещё раз! 💪"
+    wrong_toast: "Попробуй ещё раз! 💪",
+    results_title: "Ты на правильном пути!",
+    total_label: "Всего",
+    correct_label: "Верно",
+    wrong_label: "Ошибки",
+    accuracy_label: "Точность",
+    time_label: "Время",
+    try_again: "Попробовать ещё"
   },
   es: {
     title: "Suma y Resta",
@@ -101,7 +122,14 @@ window.I18N = {
     wrong: "Errores",
     streak: "Racha",
     right_toast: "¡Correcto! 🎉",
-    wrong_toast: "¡Intenta de nuevo! 💪"
+    wrong_toast: "¡Intenta de nuevo! 💪",
+    results_title: "¡Estás en el camino correcto!",
+    total_label: "Total",
+    correct_label: "Correcto",
+    wrong_label: "Errores",
+    accuracy_label: "Precisión",
+    time_label: "Tiempo",
+    try_again: "Intentar de nuevo"
   }
 };
 
@@ -112,7 +140,7 @@ window.I18N = {
 window.applyI18n = function(lang) {
   // Нормализация: если пришел 'ua', но в словаре только 'uk', или наоборот
   const dict = window.I18N[lang] || window.I18N.uk || window.I18N.ua;
-  
+
   // Update all elements with data-i18n attribute
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
@@ -120,36 +148,19 @@ window.applyI18n = function(lang) {
       el.textContent = dict[key];
     }
   });
-  
+
   // Update HTML lang attribute
   document.documentElement.lang = lang;
-  
+
   // Update active language button (Smart check)
   document.querySelectorAll(".lang-btn").forEach(b => {
     const btnLang = b.dataset.lang;
     // Считаем 'ua' и 'uk' одинаковыми
-    const isMatch = (btnLang === lang) || 
-                    (btnLang === 'uk' && lang === 'ua') || 
+    const isMatch = (btnLang === lang) ||
+                    (btnLang === 'uk' && lang === 'ua') ||
                     (btnLang === 'ua' && lang === 'uk');
-    
+
     b.classList.toggle("active", isMatch);
-  });
-};
-  
-  // Update all elements with data-i18n attribute
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.getAttribute("data-i18n");
-    if (dict[key]) {
-      el.textContent = dict[key];
-    }
-  });
-  
-  // Update HTML lang attribute
-  document.documentElement.lang = lang;
-  
-  // Update active language button
-  document.querySelectorAll(".lang-btn").forEach(b => {
-    b.classList.toggle("active", b.dataset.lang === lang);
   });
 };
 
