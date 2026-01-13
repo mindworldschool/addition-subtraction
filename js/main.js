@@ -519,20 +519,27 @@ function handleAnswer(isCorrect, value) {
     }
   }, 1200);
 }
-// ========== Helpers: active language pill (FIXED) ==========
+// ========== Helpers: Подсветка кнопок (ИСПРАВЛЕНО) ==========
 function setActiveLangButton(L) {
   document.querySelectorAll('.lang-btn').forEach(b => {
-    // Проверяем: совпадает ли язык точно ИЛИ это пара ua/uk
     const btnLang = b.dataset.lang;
-    const isActive = (btnLang === L) || (L === 'ua' && btnLang === 'uk');
-    b.classList.toggle('active', isActive);
+    // Считаем, что 'ua' и 'uk' — это одно и то же
+    const isSame = (btnLang === L) || 
+                   (btnLang === 'uk' && L === 'ua') || 
+                   (btnLang === 'ua' && L === 'uk');
+                   
+    if (isSame) {
+      b.classList.add('active');
+    } else {
+      b.classList.remove('active');
+    }
   });
 }
 
-// ========== Initialize on Page Load (FIXED) ==========
+// ========== Initialize on Page Load (FINAL) ==========
 window.addEventListener('DOMContentLoaded', () => {
   
-  // 1. Функция для чтения ?lang=... из ссылки
+  // 1. Читаем ?lang=... из ссылки
   function getUrlParam(name) {
     const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
     const results = regex.exec(location.search);
@@ -553,21 +560,21 @@ window.addEventListener('DOMContentLoaded', () => {
   let urlLang = getUrlParam('lang');
   const saved = Storage.loadSettings();
 
-  // Если Тильда прислала 'uk', меняем на 'ua' для внутренней логики
+  // Если Тильда прислала 'uk', превращаем в 'ua' для внутренней логики
   if (urlLang === 'uk') urlLang = 'ua';
 
-  // Выбираем язык
+  // Приоритеты: Ссылка > Сохраненное > UA
   if (urlLang && I18N[urlLang]) {
-    state.lang = urlLang; // Приоритет ссылки
+    state.lang = urlLang;
   } else if (saved && saved.lang && I18N[saved.lang]) {
-    state.lang = saved.lang; // Приоритет памяти
+    state.lang = saved.lang;
   } else {
-    state.lang = 'ua'; // По умолчанию
+    state.lang = 'ua';
   }
 
-  // Применяем язык и ПОДСВЕЧИВАЕМ КНОПКУ
+  // Применяем язык
   applyLang(state.lang);
-  setActiveLangButton(state.lang);
+  setActiveLangButton(state.lang); // <--- Теперь кнопка точно загорится
   
   // Загружаем настройки звука
   loadSoundPreference();
@@ -575,9 +582,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Переключатель языка (клик по кнопкам)
   document.querySelectorAll('.lang-btn').forEach(b => {
     b.addEventListener('click', () => {
-      // При клике берем то, что написано на кнопке (uk или en...)
       let selectedLang = b.dataset.lang;
-      // Если кнопка 'uk', превращаем в 'ua' для логики
+      // Нормализуем клик по кнопке 'uk' -> 'ua'
       if (selectedLang === 'uk') selectedLang = 'ua';
       
       state.lang = selectedLang;
@@ -621,7 +627,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById("btn-settings")?.addEventListener('click', () => {
     try { playSound(sfx.click); } catch(e){}
     switchPanel(false);
-    if (typeof hardCleanupOverlays === 'function') hardCleanupOverlays();
+    hardCleanupOverlays();
   });
   
   document.getElementById("btn-next")?.addEventListener('click', () => {
