@@ -106,11 +106,35 @@ window.I18N = {
 };
 
 /**
- * Apply internationalization to the page
+ * Apply internationalization to the page (FIXED)
  * @param {string} lang - Language code (uk, en, ru, es)
  */
 window.applyI18n = function(lang) {
-  const dict = window.I18N[lang] || window.I18N.uk;
+  // Нормализация: если пришел 'ua', но в словаре только 'uk', или наоборот
+  const dict = window.I18N[lang] || window.I18N.uk || window.I18N.ua;
+  
+  // Update all elements with data-i18n attribute
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (dict && dict[key]) {
+      el.textContent = dict[key];
+    }
+  });
+  
+  // Update HTML lang attribute
+  document.documentElement.lang = lang;
+  
+  // Update active language button (Smart check)
+  document.querySelectorAll(".lang-btn").forEach(b => {
+    const btnLang = b.dataset.lang;
+    // Считаем 'ua' и 'uk' одинаковыми
+    const isMatch = (btnLang === lang) || 
+                    (btnLang === 'uk' && lang === 'ua') || 
+                    (btnLang === 'ua' && lang === 'uk');
+    
+    b.classList.toggle("active", isMatch);
+  });
+};
   
   // Update all elements with data-i18n attribute
   document.querySelectorAll("[data-i18n]").forEach(el => {
@@ -177,4 +201,5 @@ window.renderOptions = function(options) {
     btn.dataset.correct = opt.correct ? "1" : "0";
     wrap.appendChild(btn);
   });
+
 };
