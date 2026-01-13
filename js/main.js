@@ -546,6 +546,21 @@ window.addEventListener('DOMContentLoaded', () => {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   }
 
+  // 2. Определяем язык по реферерру (откуда пришел пользователь)
+  function detectLangFromReferrer() {
+    try {
+      const referrer = document.referrer || window.location.href;
+      // Если в URL есть /en - значит английская версия сайта
+      if (referrer.includes('/en')) {
+        return 'en';
+      }
+      // Если нет /en - значит украинская версия (по умолчанию)
+      return 'uk';
+    } catch(e) {
+      return 'uk'; // По умолчанию украинский
+    }
+  }
+
   // Настройка эффектов
   try { ensureConfettiCanvas(); hardCleanupOverlays(); } catch(e) {}
 
@@ -555,25 +570,28 @@ window.addEventListener('DOMContentLoaded', () => {
     bs.disabled = false;
     bs.removeAttribute('disabled');
   }
-  
-  // 2. ЛОГИКА ВЫБОРА ЯЗЫКА
+
+  // 3. ЛОГИКА ВЫБОРА ЯЗЫКА
   let urlLang = getUrlParam('lang');
   const saved = Storage.loadSettings();
+  const referrerLang = detectLangFromReferrer();
 
   // Если Тильда прислала 'uk', превращаем в 'ua' для внутренней логики
   if (urlLang === 'uk') urlLang = 'ua';
 
-  // Приоритеты: Ссылка > Сохраненное > UA
+  // Приоритеты: URL параметр > Реферер > Сохраненное > UK
   if (urlLang && I18N[urlLang]) {
     state.lang = urlLang;
+  } else if (referrerLang && I18N[referrerLang]) {
+    state.lang = referrerLang;
   } else if (saved && saved.lang && I18N[saved.lang]) {
     state.lang = saved.lang;
   } else {
-    state.lang = 'ua';
+    state.lang = 'uk';
   }
 
   // Применяем язык
-  applyLang(state.lang);
+  applyI18n(state.lang);
   setActiveLangButton(state.lang); // <--- Теперь кнопка точно загорится
   
   // Загружаем настройки звука
@@ -585,15 +603,15 @@ window.addEventListener('DOMContentLoaded', () => {
       let selectedLang = b.dataset.lang;
       // Нормализуем клик по кнопке 'uk' -> 'ua'
       if (selectedLang === 'uk') selectedLang = 'ua';
-      
+
       state.lang = selectedLang;
-      applyLang(state.lang);
+      applyI18n(state.lang);
       setActiveLangButton(state.lang);
-      
+
       Storage.saveSettings({
-        level: state.level || 'easy', 
-        mode: state.mode || 'mul', 
-        series: state.series || 10, 
+        level: state.level || 'easy',
+        mode: state.mode || 'mul',
+        series: state.series || 10,
         lang: state.lang
       });
     });
