@@ -526,18 +526,18 @@ function setActiveLangButton(L){
     b.classList.toggle('active', b.dataset.lang === L);
   });
 }
-// ========== Initialize on Page Load (UPDATED with URL params support) ==========
+// ========== Initialize on Page Load (FIXED for Tilda) ==========
 window.addEventListener('DOMContentLoaded', () => {
-  // 1. Вспомогательная функция для чтения ?lang=en из адреса
+  
+  // 1. Функция для чтения ?lang=... из ссылки
   function getUrlParam(name) {
     const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
     const results = regex.exec(location.search);
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   }
 
-  // Подготовим confetti canvas и уберём возможные хвосты
-  ensureConfettiCanvas();
-  hardCleanupOverlays();
+  // Настройка конфетти
+  try { ensureConfettiCanvas(); hardCleanupOverlays(); } catch(e) {}
 
   // Активируем кнопку Старт
   const bs = document.getElementById('btn-start');
@@ -546,30 +546,38 @@ window.addEventListener('DOMContentLoaded', () => {
     bs.removeAttribute('disabled');
   }
   
-  // 2. Логика выбора языка (URL > Saved > Default)
+  // 2. ЛОГИКА ВЫБОРА ЯЗЫКА (Ссылка > Память > UA)
+  let urlLang = getUrlParam('lang');
   const saved = Storage.loadSettings();
-  const urlLang = getUrlParam('lang'); // Читаем из ссылки
-  
-  if (urlLang && ['en', 'uk', 'ru', 'es'].includes(urlLang)) {
-    // Если в ссылке есть язык - используем его ПРИНУДИТЕЛЬНО
-    state.lang = urlLang;
-  } else if (saved?.lang) {
-    // Иначе берем сохраненный
-    state.lang = saved.lang;
-  }
-  // Иначе останется 'uk' по умолчанию (из const state)
 
-  applyI18n(state.lang);
+  // Если вдруг Тильда прислала 'uk', превращаем в 'ua' (так как в игре код 'ua')
+  if (urlLang === 'uk') urlLang = 'ua';
+
+  // Проверяем: если в ссылке есть правильный язык (ua, en, ru, es) — берем его
+  if (urlLang && I18N[urlLang]) {
+    state.lang = urlLang;
+  } 
+  // Если ссылки нет, но есть сохраненные настройки — берем их
+  else if (saved && saved.lang && I18N[saved.lang]) {
+    state.lang = saved.lang;
+  } 
+  // Иначе — украинский по умолчанию
+  else {
+    state.lang = 'ua';
+  }
+
+  // Применяем язык
+  applyLang(state.lang);
   setActiveLangButton(state.lang);
   
-  // Сохранённый звук
+  // Загружаем настройки звука
   loadSoundPreference();
   
-  // Переключатель языка (кнопки в шапке)
+  // Переключатель языка (кнопки внутри игры)
   document.querySelectorAll('.lang-btn').forEach(b => {
     b.addEventListener('click', () => {
       state.lang = b.dataset.lang;
-      applyI18n(state.lang);
+      applyLang(state.lang);
       setActiveLangButton(state.lang);
       Storage.saveSettings({
         level: state.level, 
@@ -577,64 +585,67 @@ window.addEventListener('DOMContentLoaded', () => {
         series: state.series, 
         lang: state.lang
       });
-      // Перерисуем заголовки на экране результатов, если открыт
-      const ro = document.getElementById('results-overlay');
-      if (ro) {
-        removeResultsScreen();
-        showResultsScreen();
-      }
     });
   });
   
-  // Восстановить значения в селекторах
+  // Восстанавливаем остальные настройки (уровень, серия)
   if (saved) {
-    document.getElementById("level").value = saved.level || 'easy';
-    document.getElementById("mode").value = saved.mode || '2';
-    document.getElementById("series").value = String(saved.series ?? 10);
+    if (saved.level) document.getElementById("level").value = saved.level;
+    if (saved.mode) {
+        state.mode = saved.mode;
+        document.getElementById("mode").value = saved.mode;
+    }
+    if (saved.series) {
+        state.series = Number(saved.series);
+        document.getElementById("series").value = String(state.series);
+    }
   }
   
-  // Слушатели
-  document.getElementById("btn-start").addEventListener('click', () => {
+  // === Слушатели кнопок ===
+  
+  document.getElementById("btn-start")?.addEventListener('click', () => {
     playSound(sfx.click);
     onStart();
   });
   
-  document.getElementById("btn-sound").addEventListener('click', () => {
+  document.getElementById("btn-sound")?.addEventListener('click', () => {
     toggleSound();
     playSound(sfx.click);
   });
   
-  document.getElementById("btn-settings").addEventListener('click', () => {
+  document.getElementById("btn-settings")?.addEventListener('click', () => {
     playSound(sfx.click);
     switchPanel(false);
     hardCleanupOverlays();
   });
   
-  document.getElementById("btn-next").addEventListener('click', () => {
+  document.getElementById("btn-next")?.addEventListener('click', () => {
     playSound(sfx.click);
     nextTask();
   });
   
-  // Клик по кнопкам-ответам
-  document.getElementById("answers").addEventListener('click', (e) => {
+  // Клики по вариантам ответов
+  document.getElementById("answers")?.addEventListener('click', (e) => {
     if (state.answered) return;
     const btn = e.target.closest('.answer-btn');
     if (!btn) return;
     handleAnswer(btn.dataset.correct === '1', Number(btn.textContent));
   });
 
-  // Отправка ответа из инпута
+  // Кнопка "Ответить" (для ручного ввода)
   const submitBtn = document.getElementById("btn-submit");
   if (submitBtn) {
     submitBtn.addEventListener('click', () => {
       if (state.answered) return;
       const val = Number(document.getElementById("answerInput").value);
       if (isNaN(val)) return;
-      handleAnswer(val === state.current.answer, val);
+      // В этой игре правильный ответ хранится в state.current.answer
+      const isCorrect = (val === state.current.answer);
+      handleAnswer(isCorrect, val);
     });
   }
   
-  // Enter в инпут-режиме
+  // Enter в поле ввода
   const answerInput = document.getElementById("answerInput");
   if (answerInput) {
     answerInput.addEventListener('keydown', (e) => {
@@ -646,7 +657,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Горячие клавиши 1/2/3 для кнопок ответов
+  // Клавиши 1, 2, 3 для быстрого ответа
   document.addEventListener('keydown', (e) => {
     if (document.getElementById("panel-game").hidden) return;
     if (state.answered) return;
@@ -660,4 +671,3 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
