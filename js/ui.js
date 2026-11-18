@@ -4,6 +4,8 @@
 // ========== Internationalization ==========
 window.I18N = {
   uk: {
+    sound: "Звук",
+    input_label: "Введіть відповідь",
     title: "Додавання та віднімання",
     settings: "Налаштування",
     level: "Рівень",
@@ -36,6 +38,8 @@ window.I18N = {
     try_again: "Спробувати ще"
   },
   en: {
+    sound: "Sound",
+    input_label: "Type the answer",
     title: "Addition & Subtraction",
     settings: "Settings",
     level: "Difficulty",
@@ -68,6 +72,8 @@ window.I18N = {
     try_again: "Try Again"
   },
   ru: {
+    sound: "Звук",
+    input_label: "Введите ответ",
     title: "Сложение и вычитание",
     settings: "Настройки",
     level: "Уровень сложности",
@@ -100,6 +106,8 @@ window.I18N = {
     try_again: "Попробовать ещё"
   },
   es: {
+    sound: "Sonido",
+    input_label: "Escribe la respuesta",
     title: "Suma y Resta",
     settings: "Ajustes",
     level: "Nivel",

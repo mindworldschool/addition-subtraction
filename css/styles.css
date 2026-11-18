@@ -1,16 +1,17 @@
 /* ===================================
    MindWorld School - Addition & Subtraction Trainer
-   Version: 14.3 (Header on top, new language capsule, centered UI)
+   Шапка, языки, шрифт и фон — общая оболочка (trainer-shell/shell.v1.css).
+   Раскладка игры — по образцу кабинетной версии: картинка с доской + карточка с ответами.
    =================================== */
 
 :root {
-  --orange: #EC8D00;
-  --coral: #E8654B;
-  --ivory: #FDF8F3;
+  --orange: var(--primary, #ff7c00);
+  --coral: var(--primary-hover, #e06600);
+  --ivory: var(--bg-light, #fdfcf5);
   --green: #2e7d32;
   --red: #c62828;
   --text: #333;
-  --shadow: 0 6px 24px rgba(0,0,0,.12);
+  --shadow: 0 4px 14px rgba(0,0,0,.08);
   --board-top: 7.5%;
   --board-right: calc(4.5% + 10px);
   --board-width: 50%;
@@ -19,112 +20,46 @@
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; margin: 0; }
-
-body {
-  font-family: Inter, system-ui, 'Segoe UI', Arial, sans-serif;
-  color: var(--text);
-  background: linear-gradient(180deg, var(--orange), var(--coral));
-  opacity: 0;
-  animation: fadeIn 1s ease-in forwards;
-}
-
-@keyframes fadeIn { to { opacity: 1; } }
+/* Раньше страница появлялась анимацией с opacity: 0 — во фоновой вкладке
+   и при медленной загрузке она оставалась пустой. Убрано. */
 
 .app {
-  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* ===================================
-   Topbar (всегда сверху)
-   =================================== */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10050; /* выше результатов и конфетти */
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: linear-gradient(180deg, #EC8D00 0%, #E8654B 100%);
-}
-
-.topbar__left { justify-self: start; }
-
-.topbar__title {
-  justify-self: center;
-  color: #fff;
-  font-size: clamp(18px, 3.5vw, 28px);
-  margin: 0;
-  text-align: center;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
-}
-
-.topbar__right { justify-self: end; }
-
-.logo {
-  width: 48px;
-  height: 48px;
-  display: block;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
-}
-
-/* ===================================
-   Language Switcher (новая капсула)
-   =================================== */
-.lang-capsule {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
-  border-radius: 999px;
-  border: 2px solid rgba(255,255,255,.65);
-  background: transparent;
-  box-shadow: 0 2px 10px rgba(0,0,0,.08) inset;
-  backdrop-filter: saturate(1.05);
-}
-
-.lang-btn {
-  border: 0;
-  background: transparent;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 700;
-  letter-spacing: .02em;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  transition: transform .15s ease, background-color .15s ease, color .15s ease;
-}
-
-.lang-btn:hover { transform: translateY(-1px); }
-
-.lang-btn.active {
-  background: #fff;
-  color: var(--orange);
-  box-shadow: 0 4px 16px rgba(0,0,0,.18);
-}
+/* Шапка оболочки — над оверлеем результатов */
+.mw-shell .app-header { position: relative; z-index: 9600; }
 
 /* ===================================
    Content & Panels
    =================================== */
 .content {
-  width: min(1100px, 95%);
-  margin: 16px auto 32px;
-  flex: 1;
+  width: min(1100px, calc(100% - 32px));
+  margin: 20px auto 28px;
 }
 
 .panel {
-  background: rgba(255, 255, 255, .95);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
+  background: var(--bg-white, #fff);
+  border-radius: var(--radius, 16px);
+  box-shadow: var(--shadow-card, 0 12px 30px rgba(255, 124, 0, 0.15));
   padding: 24px;
+}
+.panel-game { padding: 16px; }
+
+/* Игра: картинка с доской слева, карточка с ответами справа (на телефоне — под картинкой).
+   Ширина картинки ограничена, чтобы на ноутбуке всё помещалось по высоте */
+.play-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: stretch;
+}
+.controls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
 }
 
 /* ===================================
@@ -152,9 +87,10 @@ body {
 /* Поля + центр отображаемого значения */
 select, .input {
   padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid #ddd;
+  border-radius: var(--radius-sm, 10px);
+  border: 2px solid var(--border, #e0e0e0);
   background: #fff;
+  font-family: inherit;
   font-size: 16px;
   transition: border-color 0.3s ease;
   text-align: center;
@@ -168,13 +104,14 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
    =================================== */
 .btn {
   padding: 12px 20px;
-  border-radius: 12px;
+  border-radius: var(--radius, 16px);
+  font-family: inherit;
   border: 0;
   background: var(--orange);
   color: #fff;
   cursor: pointer;
-  box-shadow: var(--shadow);
-  font-weight: 600;
+  box-shadow: none;
+  font-weight: 700;
   font-size: 16px;
   transition: all 0.2s ease;
   display: inline-flex;             /* центрируем содержимое кнопок */
@@ -183,15 +120,17 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
   text-align: center;
 }
 
-.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.18); }
+.btn:hover { transform: translateY(-1px); background: var(--coral); }
 .btn:active { transform: translateY(1px); }
-.btn.primary { background: var(--green); }
+.btn.primary { background: var(--orange); }
 
+/* «Вихід» — как .btn--exit оболочки */
 .btn.ghost {
-  background: #fff;
-  color: var(--text);
-  border: 1px solid #ddd;
+  background: transparent;
+  color: var(--text-secondary, #7d733a);
+  border: 2px solid var(--border, #e0e0e0);
 }
+.btn.ghost:hover { background: var(--bg-light, #fdfcf5); }
 
 .actions { display: flex; align-items: end; justify-content: center; }
 
@@ -204,7 +143,7 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
    Game Screen
    =================================== */
 .game-screen {
-  margin: 8px auto 16px;
+  margin: 0;
   width: 100%;
   aspect-ratio: 16/9;
   background-image: 
@@ -215,8 +154,7 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  border-radius: 16px;
-  box-shadow: var(--shadow);
+  border-radius: var(--radius, 16px);
   position: relative;
   overflow: hidden;
 }
@@ -269,23 +207,26 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
    Answer Buttons
    =================================== */
 .answers {
-  margin-top: 12px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 10px;
 }
+.answers:empty { display: none; }
+/* Скрипт ставит answers.style.display = "flex"/"none"; когда кнопки видны — сетка во всю ширину */
+#answers:not([style*="none"]) { display: grid !important; }
 
 .answer-btn {
-  min-width: 120px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 0;
+  min-width: 0;
+  padding: 14px 10px;
+  border-radius: var(--radius, 16px);
+  border: 2px solid rgba(255, 124, 0, 0.25);
   background: #fff;
-  box-shadow: var(--shadow);
+  box-shadow: none;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary, #2c3e50);
   transition: all 0.2s ease;
   display: inline-flex;      /* центрирование текста */
   align-items: center;
@@ -293,7 +234,7 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
   text-align: center;
 }
 
-.answer-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.18); }
+.answer-btn:hover { transform: translateY(-1px); border-color: var(--orange); }
 .answer-btn:active { transform: scale(.98); }
 
 /* ===================================
@@ -302,57 +243,49 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
 .input-wrap {
   display: none;
   gap: 10px;
-  justify-content: center;
-  margin-top: 12px;
 }
 
-.input-wrap:not([hidden]) { display: flex; }
-
-@media (max-width: 480px) {
-  .input-wrap:not([hidden]) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
+.input-wrap:not([hidden]) { display: flex; flex-direction: column; align-items: stretch; }
+.input-wrap .input { font-size: 28px; font-weight: 700; }
 
 /* ===================================
-   Toolbar
+   Toolbar: «Далі» + звук
    =================================== */
 .toolbar {
-  margin-top: 12px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
 }
-
-.toolbar__left { display: flex; gap: 10px; align-items: center; }
 
 .btn-sound {
-  min-width: 48px;
-  padding: 12px;
+  min-width: 52px;
+  padding: 10px 12px;
   font-size: 20px;
-  background: #fff;
+  background: rgba(125, 115, 58, 0.1);
   color: var(--text);
-  border: 1px solid #ddd;
+  border: 0;
 }
-
+.btn-sound:hover { background: rgba(125, 115, 58, 0.18); }
 .btn-sound.muted { opacity: 0.5; }
 
-@media (max-width: 768px) {
-  .toolbar { flex-direction: column; align-items: stretch; }
-  .toolbar__left { width: 100%; }
-  .toolbar > * { width: 100%; justify-content: center; }
-}
-
+/* Счётчики — плитки 2×2 */
 .stats {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center; /* центрируем блок статистики */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary, #7d733a);
 }
+.stats > span {
+  background: rgba(255, 124, 0, 0.06);
+  border: 1px solid rgba(255, 124, 0, 0.14);
+  border-radius: var(--radius-sm, 10px);
+  padding: 6px 8px;
+  text-align: center;
+}
+.stats b { color: var(--orange); }
+
+.btn-exit { width: 100%; }
 
 /* ===================================
    Toast Notifications
@@ -401,7 +334,15 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
 }
 
 /* Оверлей результатов добавляет отступ под шапку */
-.results-padding-top { padding-top: 88px !important; }
+.results-padding-top { padding-top: 110px !important; }
+
+/* Результаты — в цветах оболочки (стили оверлея задаёт скрипт, поэтому !important) */
+#results-overlay { background: var(--bg-light, #fdfcf5) !important; }
+#results-overlay > div {
+  background: #fff !important;
+  border-radius: var(--radius, 16px) !important;
+  box-shadow: var(--shadow-card, 0 12px 30px rgba(255, 124, 0, 0.15)) !important;
+}
 
 /* ===================================
    Responsive Board Positioning
@@ -433,4 +374,20 @@ select:focus, .input:focus { outline: none; border-color: var(--orange); }
   }
   .task { font-size: clamp(28px, 7.2vw, 64px); }
   .panel { padding: 16px; }
+}
+
+/* ===================================
+   Ноутбук и телефон
+   =================================== */
+@media (max-width: 860px) {
+  /* картинка над карточкой с ответами */
+  .play-layout { grid-template-columns: minmax(0, 1fr); }
+  .controls-card { max-width: 520px; width: 100%; margin: 0 auto; }
+}
+
+@media (max-width: 600px) {
+  .content { width: calc(100% - 20px); margin: 10px auto 20px; }
+  .panel { padding: 16px; }
+  .panel-game { padding: 10px; }
+  .results-padding-top { padding-top: 130px !important; }
 }
