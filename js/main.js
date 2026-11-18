@@ -519,48 +519,19 @@ function handleAnswer(isCorrect, value) {
     }
   }, 1200);
 }
-// ========== Helpers: Подсветка кнопок (ИСПРАВЛЕНО) ==========
-function setActiveLangButton(L) {
-  document.querySelectorAll('.lang-btn').forEach(b => {
-    const btnLang = b.dataset.lang;
-    // Считаем, что 'ua' и 'uk' — это одно и то же
-    const isSame = (btnLang === L) || 
-                   (btnLang === 'uk' && L === 'ua') || 
-                   (btnLang === 'ua' && L === 'uk');
-                   
-    if (isSame) {
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
-    }
-  });
+// ========== Язык: тексты страницы и подсказки кнопок ==========
+function applyLanguage(L) {
+  applyI18n(L);
+  const dict = I18N[L] || I18N.uk;
+  const sound = document.getElementById('btn-sound');
+  if (sound && dict.sound) { sound.title = dict.sound; sound.setAttribute('aria-label', dict.sound); }
+  const input = document.getElementById('answerInput');
+  if (input && dict.input_label) input.setAttribute('aria-label', dict.input_label);
 }
 
 // ========== Initialize on Page Load (FINAL) ==========
 window.addEventListener('DOMContentLoaded', () => {
   
-  // 1. Читаем ?lang=... из ссылки
-  function getUrlParam(name) {
-    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    const results = regex.exec(location.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-  }
-
-  // 2. Определяем язык по реферерру (откуда пришел пользователь)
-  function detectLangFromReferrer() {
-    try {
-      const referrer = document.referrer || window.location.href;
-      // Если в URL есть /en - значит английская версия сайта
-      if (referrer.includes('/en')) {
-        return 'en';
-      }
-      // Если нет /en - значит украинская версия (по умолчанию)
-      return 'uk';
-    } catch(e) {
-      return 'uk'; // По умолчанию украинский
-    }
-  }
-
   // Настройка эффектов
   try { ensureConfettiCanvas(); hardCleanupOverlays(); } catch(e) {}
 
@@ -571,52 +542,28 @@ window.addEventListener('DOMContentLoaded', () => {
     bs.removeAttribute('disabled');
   }
 
-  // 3. ЛОГИКА ВЫБОРА ЯЗЫКА
-  let urlLang = getUrlParam('lang');
+  // 3. ЯЗЫК — выбирает общая оболочка (trainer-shell): ?lang= → сохранённый выбор → браузер → украинский.
+  // Стартовый язык приходит в window.APP_LANG, смену сообщает событие mw:langchange.
   const saved = Storage.loadSettings();
-  const referrerLang = detectLangFromReferrer();
+  state.lang = (window.APP_LANG && I18N[window.APP_LANG]) ? window.APP_LANG : 'uk';
+  applyLanguage(state.lang);
 
-  // Если Тильда прислала 'uk', превращаем в 'ua' для внутренней логики
-  if (urlLang === 'uk') urlLang = 'ua';
-
-  // Приоритеты: URL параметр > Реферер > Сохраненное > UK
-  if (urlLang && I18N[urlLang]) {
-    state.lang = urlLang;
-  } else if (referrerLang && I18N[referrerLang]) {
-    state.lang = referrerLang;
-  } else if (saved && saved.lang && I18N[saved.lang]) {
-    state.lang = saved.lang;
-  } else {
-    state.lang = 'uk';
-  }
-
-  // Применяем язык
-  applyI18n(state.lang);
-  setActiveLangButton(state.lang); // <--- Теперь кнопка точно загорится
-  
   // Загружаем настройки звука
   loadSoundPreference();
-  
-  // Переключатель языка (клик по кнопкам)
-  document.querySelectorAll('.lang-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      let selectedLang = b.dataset.lang;
-      // Нормализуем клик по кнопке 'uk' -> 'ua'
-      if (selectedLang === 'uk') selectedLang = 'ua';
 
-      state.lang = selectedLang;
-      applyI18n(state.lang);
-      setActiveLangButton(state.lang);
-
-      Storage.saveSettings({
-        level: state.level || 'easy',
-        mode: state.mode || 'mul',
-        series: state.series || 10,
-        lang: state.lang
-      });
+  document.addEventListener('mw:langchange', (e) => {
+    const selectedLang = e.detail && e.detail.lang;
+    if (!selectedLang || !I18N[selectedLang]) return;
+    state.lang = selectedLang;
+    applyLanguage(state.lang);
+    Storage.saveSettings({
+      level: state.level || 'easy',
+      mode: state.mode || 'mul',
+      series: state.series || 10,
+      lang: state.lang
     });
   });
-  
+
   // Восстанавливаем настройки игры
   if (saved) {
     if (saved.level) document.getElementById("level").value = saved.level;
